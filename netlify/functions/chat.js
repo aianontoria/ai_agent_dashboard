@@ -12,20 +12,30 @@ exports.handler = async (event) => {
       };
     }
 
-    const hfRes = await fetch("https://api-inference.huggingface.co/models/declare-lab/flan-alpaca-base", {
+    const response = await fetch("https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ inputs: prompt })
+      body: JSON.stringify({
+        inputs: [
+          { role: "system", content: "You are a helpful AI assistant." },
+          { role: "user", content: prompt }
+        ]
+      })
     });
 
-    const result = await hfRes.json();
+    const result = await response.json();
+
+    const reply =
+      result?.generated_text ||
+      result?.[0]?.generated_text ||
+      "No response from model.";
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ response: result[0]?.generated_text || "No response." })
+      body: JSON.stringify({ response: reply })
     };
   } catch (e) {
     return {
