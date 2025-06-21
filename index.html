@@ -1,135 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>AI Agent Dashboard with CSV + Chart</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-</head>
-<body class="bg-gray-100 font-sans">
+// 🧠 Chat agent logic (via Ollama)
+document.getElementById("chatForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+  const input = document.getElementById("chatInput");
+  const msg = input.value.trim();
+  if (!msg) return;
 
-  <main class="p-6 max-w-6xl mx-auto mt-10">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">📈 Business Dashboard</h1>
+  const chatLog = document.getElementById("chatLog");
 
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-10">
-      <div id="meatCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Meat Stock</h2>
-        <p id="meatStock" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="flourCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Flour Stock</h2>
-        <p id="flourStock" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="revenueCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Revenue</h2>
-        <p id="revenue" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="expensesCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Expenses</h2>
-        <p id="expenses" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="productionCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Production</h2>
-        <p id="production" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-    </div>
+  const userMsg = document.createElement("div");
+  userMsg.className = "text-right";
+  userMsg.innerHTML = `<span class="inline-block bg-blue-100 px-3 py-2 rounded-lg">${msg}</span>`;
+  chatLog.appendChild(userMsg);
+  chatLog.scrollTop = chatLog.scrollHeight;
 
-    <!-- Chart -->
-    <div class="bg-white p-6 rounded-lg shadow mb-10">
-      <h2 class="text-xl font-semibold mb-4">📊 Revenue & Expenses (Last 7 Days)</h2>
-      <canvas id="financeChart" height="120"></canvas>
-    </div>
-  </main>
+  input.value = "";
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrqB3aE-D19ORDD5MPoYF3EDLXNZuRgJzql3idB6wpB2w73X69Vb_Kx2zrQ_RFt2SdNBDZAllggRbV/pub?gid=0&single=true&output=csv';
-
-      Papa.parse(sheetURL, {
-        download: true,
-        header: true,
-        complete: function (results) {
-          const data = results.data;
-          if (!data || data.length < 2) return;
-
-          const latest = data[data.length - 2]; // skip empty last row if present
-
-          // Update KPI values
-          document.getElementById("meatStock").innerText = `${latest.Meat_Stock} units`;
-          document.getElementById("flourStock").innerText = `${latest.Flour_Stock} kg`;
-          document.getElementById("revenue").innerText = `$${latest.Revenue}`;
-          document.getElementById("expenses").innerText = `$${latest.Expenses}`;
-          document.getElementById("production").innerText = `${latest.Production_Output} items`;
-
-          // Color alerts
-          const meatCard = document.getElementById("meatCard");
-          const flourCard = document.getElementById("flourCard");
-          const revenueCard = document.getElementById("revenueCard");
-          const expensesCard = document.getElementById("expensesCard");
-
-          parseInt(latest.Meat_Stock) < 20
-            ? meatCard.classList.add("bg-red-100")
-            : meatCard.classList.remove("bg-red-100");
-
-          parseInt(latest.Flour_Stock) < 30
-            ? flourCard.classList.add("bg-yellow-100")
-            : flourCard.classList.remove("bg-yellow-100");
-
-          parseFloat(latest.Revenue) < 10000
-            ? revenueCard.classList.add("bg-red-100")
-            : revenueCard.classList.remove("bg-red-100");
-
-          parseFloat(latest.Expenses) > 8000
-            ? expensesCard.classList.add("bg-red-100")
-            : expensesCard.classList.remove("bg-red-100");
-
-          // Chart Data (last 7 days)
-          const last7 = data.slice(-8, -1); // last 7 non-empty rows
-          const dates = last7.map(r => r.Date);
-          const revenue = last7.map(r => parseFloat(r.Revenue));
-          const expenses = last7.map(r => parseFloat(r.Expenses));
-
-          const ctx = document.getElementById('financeChart').getContext('2d');
-          new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: dates,
-              datasets: [
-                {
-                  label: 'Revenue',
-                  data: revenue,
-                  backgroundColor: 'rgba(34,197,94,0.2)',
-                  borderColor: 'rgba(34,197,94,1)',
-                  borderWidth: 2,
-                  fill: true
-                },
-                {
-                  label: 'Expenses',
-                  data: expenses,
-                  backgroundColor: 'rgba(239,68,68,0.2)',
-                  borderColor: 'rgba(239,68,68,1)',
-                  borderWidth: 2,
-                  fill: true
-                }
-              ]
-            },
-            options: {
-              responsive: true,
-              scales: {
-                yAxes: [{
-                  ticks: {
-                    beginAtZero: true
-                  }
-                }]
-              }
-            }
-          });
-        }
-      });
+  try {
+    const res = await fetch("http://localhost:11434/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "mistral", prompt: msg, stream: false })
     });
-  </script>
-</body>
-</html>
+    const data = await res.json();
+
+    const botMsg = document.createElement("div");
+    botMsg.className = "text-left";
+    botMsg.innerHTML = `<span class="inline-block bg-gray-100 px-3 py-2 rounded-lg">${data.response}</span>`;
+    chatLog.appendChild(botMsg);
+    chatLog.scrollTop = chatLog.scrollHeight;
+
+  } catch (err) {
+    const errorMsg = document.createElement("div");
+    errorMsg.className = "text-left text-red-600";
+    errorMsg.textContent = "⚠️ AI agent is unavailable. Make sure Ollama is running.";
+    chatLog.appendChild(errorMsg);
+  }
+});
