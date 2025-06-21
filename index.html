@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>AI Agent Dashboard with CSV + Chart</title>
+  <title>AI Agent Dashboard with CSV + Chart + AI Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
@@ -44,10 +44,23 @@
       <h2 class="text-xl font-semibold mb-4">📊 Revenue & Expenses (Last 7 Days)</h2>
       <canvas id="financeChart" height="120"></canvas>
     </div>
+
+    <!-- AI Agent Chatbox -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-semibold mb-4">🤖 AI Agent Chat</h2>
+
+      <div id="chatWindow" class="h-64 overflow-y-auto border border-gray-300 p-4 mb-4 rounded bg-gray-50">
+        <!-- Chat messages will appear here -->
+      </div>
+
+      <textarea id="userInput" class="w-full border border-gray-300 rounded p-2 mb-2" rows="3" placeholder="Type your message here..."></textarea>
+
+      <button id="sendBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Send</button>
+    </div>
   </main>
 
-  <!-- JavaScript -->
   <script>
+    // Existing CSV + Chart code
     document.addEventListener("DOMContentLoaded", function () {
       const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrqB3aE-D19ORDD5MPoYF3EDLXNZuRgJzql3idB6wpB2w73X69Vb_Kx2zrQ_RFt2SdNBDZAllggRbV/pub?gid=0&single=true&output=csv';
 
@@ -123,6 +136,61 @@
           });
         }
       });
+    });
+
+    // AI Chatbox code
+    const chatWindow = document.getElementById('chatWindow');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function appendMessage(sender, text) {
+      const messageElem = document.createElement('div');
+      messageElem.className = sender === 'user' ? 'text-right mb-2' : 'text-left mb-2';
+      messageElem.innerHTML = `<span class="inline-block px-3 py-2 rounded-lg ${sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-800'}">${text}</span>`;
+      chatWindow.appendChild(messageElem);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      appendMessage('user', message);
+      userInput.value = '';
+      appendMessage('agent', '...typing');
+
+      try {
+        const response = await fetch('/.netlify/functions/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: message })
+        });
+
+        const data = await response.json();
+
+        // Remove the '...typing' message before adding real response
+        const typingElem = chatWindow.querySelector('div:last-child');
+        if (typingElem && typingElem.textContent === '...typing') {
+          chatWindow.removeChild(typingElem);
+        }
+
+        appendMessage('agent', data.response || 'Sorry, no response.');
+      } catch (error) {
+        const typingElem = chatWindow.querySelector('div:last-child');
+        if (typingElem && typingElem.textContent === '...typing') {
+          chatWindow.removeChild(typingElem);
+        }
+        appendMessage('agent', 'Error: ' + error.message);
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     });
   </script>
 
