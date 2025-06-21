@@ -2,149 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AI Agent Dashboard with Chat</title>
+  <title>AI Agent Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    /* Floating chat widget style */
+    body { font-family: sans-serif; background: #f0f0f0; }
+
     #chatWidget {
       position: fixed;
       bottom: 20px;
       right: 20px;
       width: 320px;
-      max-height: 420px;
+      max-height: 450px;
       background: white;
-      border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-      font-family: Arial, sans-serif;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       display: flex;
       flex-direction: column;
       overflow: hidden;
       z-index: 1000;
     }
+
     #chatHeader {
-      background: #4f46e5;
+      background: #2563eb;
       color: white;
       padding: 12px;
       font-weight: bold;
-      cursor: pointer;
     }
+
     #chatBody {
       flex: 1;
-      padding: 10px;
       overflow-y: auto;
-      font-size: 14px;
+      padding: 10px;
       background: #f9fafb;
     }
+
     #chatInputForm {
       display: flex;
       border-top: 1px solid #ddd;
     }
+
     #chatInput {
       flex: 1;
       border: none;
       padding: 10px;
-      font-size: 14px;
     }
-    #chatInput:focus {
-      outline: none;
-    }
+
     #chatSendBtn {
-      background: #4f46e5;
+      background: #2563eb;
       color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 0 15px;
       cursor: pointer;
-      font-weight: bold;
     }
-    #chatSendBtn:disabled {
-      background: #a5b4fc;
-      cursor: not-allowed;
-    }
-    .chat-message {
-      margin-bottom: 10px;
-      line-height: 1.4;
-    }
-    .chat-user {
-      text-align: right;
-      color: #1f2937;
-    }
-    .chat-ai {
-      text-align: left;
-      color: #4b5563;
+
+    .msg { margin: 5px 0; }
+    .user { text-align: right; color: #111; }
+    .ai {
       background: #e0e7ff;
-      padding: 6px 8px;
-      border-radius: 6px;
-      display: inline-block;
+      padding: 8px;
+      border-radius: 8px;
       max-width: 85%;
+      display: inline-block;
     }
   </style>
 </head>
 <body>
 
-<!-- Chat Widget -->
 <div id="chatWidget">
   <div id="chatHeader">AI Assistant 💬</div>
   <div id="chatBody"></div>
   <form id="chatInputForm">
-    <input type="text" id="chatInput" autocomplete="off" placeholder="Ask me something..." required />
+    <input type="text" id="chatInput" placeholder="Ask something..." required />
     <button type="submit" id="chatSendBtn">Send</button>
   </form>
 </div>
 
 <script>
-  const chatBody = document.getElementById('chatBody');
-  const chatInputForm = document.getElementById('chatInputForm');
-  const chatInput = document.getElementById('chatInput');
-  const chatSendBtn = document.getElementById('chatSendBtn');
+  const chatForm = document.getElementById("chatInputForm");
+  const chatInput = document.getElementById("chatInput");
+  const chatBody = document.getElementById("chatBody");
 
-  chatInputForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const userMessage = chatInput.value.trim();
-    if (!userMessage) return;
-
-    appendMessage(userMessage, 'user');
-    chatInput.value = '';
-    chatSendBtn.disabled = true;
-
-    try {
-      const response = await fetch('/.netlify/functions/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userMessage }),
-      });
-
-      if (!response.ok) throw new Error('Network response not ok');
-
-      const data = await response.json();
-
-      if (data.error) {
-        appendMessage('Error: ' + data.error, 'ai');
-      } else {
-        appendMessage(data.response, 'ai');
-      }
-    } catch (err) {
-      appendMessage('Error communicating with AI.', 'ai');
-      console.error(err);
-    } finally {
-      chatSendBtn.disabled = false;
-      chatBody.scrollTop = chatBody.scrollHeight;
-    }
-  });
-
-  function appendMessage(message, sender) {
-    const div = document.createElement('div');
-    div.classList.add('chat-message');
-    if (sender === 'user') {
-      div.classList.add('chat-user');
-      div.textContent = message;
-    } else {
-      div.classList.add('chat-ai');
-      div.textContent = message;
-    }
+  function addMessage(content, type) {
+    const div = document.createElement("div");
+    div.className = "msg " + type;
+    div.innerHTML = type === "ai" ? `<div class="ai">${content}</div>` : content;
     chatBody.appendChild(div);
     chatBody.scrollTop = chatBody.scrollHeight;
   }
+
+  chatForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const userMsg = chatInput.value;
+    chatInput.value = "";
+    addMessage(userMsg, "user");
+
+    try {
+      const res = await fetch("/.netlify/functions/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: userMsg })
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        addMessage("Error: " + data.error, "ai");
+      } else {
+        addMessage(data.response, "ai");
+      }
+    } catch (err) {
+      addMessage("Failed to reach AI.", "ai");
+    }
+  });
 </script>
 
 </body>
