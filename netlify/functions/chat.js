@@ -2,7 +2,6 @@ const fetch = require('node-fetch');
 
 exports.handler = async (event) => {
   try {
-    // Validate input
     if (!event.body) {
       return {
         statusCode: 400,
@@ -11,7 +10,6 @@ exports.handler = async (event) => {
     }
 
     const { prompt } = JSON.parse(event.body);
-
     if (!prompt) {
       return {
         statusCode: 400,
@@ -19,56 +17,54 @@ exports.handler = async (event) => {
       };
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
-
-    if (!apiKey) {
+    const HF_API_KEY = process.env.HUGGINGFACE_API_KEY;
+    if (!HF_API_KEY) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Missing OpenRouter API key." }),
+        body: JSON.stringify({ error: "Missing Hugging Face API key." }),
       };
     }
 
-    // Make API call to OpenRouter using Meta LLaMA 3 8B instruct model
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "meta-llama/llama-3-8b-instruct",
-        messages: [
-          { role: "system", content: "You are a helpful AI assistant for business analytics." },
-          { role: "user", content: prompt }
-        ]
-      })
-    });
-
-    const result = await response.json();
-
-    // Handle response errors
-    if (!result.choices || !result.choices[0]) {
-      return {
-        statusCode: 500,
+    // Call Hugging Face LLaMA chat model
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/meta-llama/Llama-2-7b-chat-hf",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${HF_API_KEY}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          error: "No valid choices in OpenRouter response.",
-          result: result
+          inputs: [
+            { role: "system", content: "You are a helpful assistant for business." },
+            { role: "user", content: prompt },
+          ],
         }),
+      }
+    );
+
+    const data = await response.json();
+
+    // Handle errors from HF API
+    if (data.error) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: `HF API error: ${data.error}` }),
       };
     }
 
-    const aiMessage = result.choices[0].message.content;
+    // The response for chat models from HF is in `data.generated_text`
+    const aiResponse = data.generated_text || "No response from model.";
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ response: aiMessage }),
+      body: JSON.stringify({ response: aiResponse }),
     };
-
-  } catch (err) {
-    console.error("Server error:", err);
+  } catch (error) {
+    console.error("Server error:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error", details: err.message }),
+      body: JSON.stringify({ error: "Internal server error.", details: error.message }),
     };
   }
 };
