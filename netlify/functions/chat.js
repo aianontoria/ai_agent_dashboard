@@ -2,7 +2,20 @@ const fetch = require('node-fetch');
 
 exports.handler = async (event) => {
   try {
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "No request body received" }),
+      };
+    }
+
     const { prompt } = JSON.parse(event.body);
+    if (!prompt) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "No prompt provided" }),
+      };
+    }
 
     const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -13,7 +26,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'mistral:instruct',
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -22,7 +35,9 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ response: result.choices?.[0]?.message?.content || "No response" }),
+      body: JSON.stringify({
+        response: result.choices?.[0]?.message?.content || "No AI response."
+      }),
     };
   } catch (err) {
     return {
