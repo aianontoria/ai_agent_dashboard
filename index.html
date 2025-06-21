@@ -1,333 +1,73 @@
-<!DOCTYPE html>
-<html lang="en" >
-<head>
-  <meta charset="UTF-8" />
-  <title>AI Agent Dashboard with CSV + Chart + Deepseek Chatbot</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
-    /* Floating chat button */
-    #chat-toggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #22c55e; /* Tailwind green-500 */
-      color: white;
-      border-radius: 9999px;
-      width: 56px;
-      height: 56px;
-      font-size: 28px;
-      line-height: 56px;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgb(34 197 94 / 0.5);
-      z-index: 1000;
-    }
+// Floating Chat Widget Logic
+(() => {
+  const chatToggle = document.getElementById("chat-toggle");
+  const chatPopup = document.getElementById("chat-popup");
+  const chatClose = document.getElementById("chat-close");
+  const chatForm = document.getElementById("chat-form");
+  const chatInput = document.getElementById("chat-input");
+  const chatMessages = document.getElementById("chat-messages");
 
-    /* Chat popup */
-    #chat-popup {
-      position: fixed;
-      bottom: 90px;
-      right: 20px;
-      width: 320px;
-      max-height: 400px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      display: none;
-      flex-direction: column;
-      z-index: 1001;
-      overflow: hidden;
-      font-family: system-ui, sans-serif;
-    }
+  // Toggle chat popup visibility
+  chatToggle.addEventListener("click", () => {
+    chatPopup.style.display = chatPopup.style.display === "flex" ? "none" : "flex";
+    chatInput.focus();
+  });
+  chatClose.addEventListener("click", () => {
+    chatPopup.style.display = "none";
+  });
 
-    #chat-header {
-      background: #22c55e;
-      color: white;
-      padding: 10px 16px;
-      font-weight: 600;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+  // Append message to chat window
+  function appendMessage(text, sender = "bot") {
+    const msgDiv = document.createElement("div");
+    msgDiv.className = `message ${sender}`;
+    msgDiv.textContent = text;
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
 
-    #chat-close {
-      cursor: pointer;
-      font-size: 20px;
-      font-weight: bold;
-      user-select: none;
-    }
+  // Send message to Deepseek API
+  async function sendMessage(message) {
+    appendMessage(message, "user");
 
-    #chat-messages {
-      flex: 1;
-      padding: 12px;
-      overflow-y: auto;
-      background: #f9fafb; /* gray-50 */
-      font-size: 14px;
-    }
-
-    .message {
-      margin-bottom: 10px;
-      max-width: 80%;
-      padding: 8px 12px;
-      border-radius: 12px;
-      clear: both;
-      word-wrap: break-word;
-    }
-
-    .message.user {
-      background: #22c55e;
-      color: white;
-      float: right;
-      border-bottom-right-radius: 0;
-    }
-
-    .message.bot {
-      background: #e5e7eb; /* gray-200 */
-      color: #111827;
-      float: left;
-      border-bottom-left-radius: 0;
-    }
-
-    #chat-input-area {
-      display: flex;
-      border-top: 1px solid #ddd;
-      padding: 8px;
-      background: white;
-    }
-
-    #chat-input {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-      outline: none;
-    }
-
-    #chat-send-btn {
-      margin-left: 8px;
-      background: #22c55e;
-      color: white;
-      border: none;
-      padding: 0 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background-color 0.2s;
-    }
-
-    #chat-send-btn:hover {
-      background: #16a34a; /* green-700 */
-    }
-  </style>
-</head>
-
-<body class="bg-gray-100 font-sans">
-
-  <main class="p-6 max-w-6xl mx-auto mt-10">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">📈 Business Dashboard</h1>
-
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-10">
-      <div id="meatCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Meat Stock</h2>
-        <p id="meatStock" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="flourCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Flour Stock</h2>
-        <p id="flourStock" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="revenueCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Revenue</h2>
-        <p id="revenue" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="expensesCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Expenses</h2>
-        <p id="expenses" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="productionCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Production</h2>
-        <p id="production" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-    </div>
-
-    <!-- Chart -->
-    <div class="bg-white p-6 rounded-lg shadow mb-10">
-      <h2 class="text-xl font-semibold mb-4">📊 Revenue & Expenses (Last 7 Days)</h2>
-      <canvas id="financeChart" height="120"></canvas>
-    </div>
-  </main>
-
-  <!-- Floating Chat Widget -->
-  <div id="chat-toggle" title="Chat with AI">💬</div>
-  <div id="chat-popup" role="dialog" aria-modal="true" aria-labelledby="chat-header">
-    <div id="chat-header">
-      AI Assistant
-      <span id="chat-close" title="Close chat" role="button" tabindex="0">&times;</span>
-    </div>
-    <div id="chat-messages" aria-live="polite" aria-relevant="additions"></div>
-    <form id="chat-form" autocomplete="off" aria-label="Send message to AI assistant" style="display:flex; padding:8px; border-top:1px solid #ddd;">
-      <input id="chat-input" type="text" placeholder="Ask me anything..." aria-required="true" />
-      <button id="chat-send-btn" type="submit">Send</button>
-    </form>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-  <script>
-    // Dashboard CSV & Chart logic (unchanged)
-    document.addEventListener("DOMContentLoaded", function () {
-      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrqB3aE-D19ORDD5MPoYF3EDLXNZuRgJzql3idB6wpB2w73X69Vb_Kx2zrQ_RFt2SdNBDZAllggRbV/pub?gid=0&single=true&output=csv';
-
-      Papa.parse(sheetURL, {
-        download: true,
-        header: true,
-        complete: function (results) {
-          const data = results.data;
-          if (!data || data.length < 2) return;
-
-          const latest = data[data.length - 2];
-
-          // Update KPI values
-          document.getElementById("meatStock").innerText = `${latest.Meat_Stock} units`;
-          document.getElementById("flourStock").innerText = `${latest.Flour_Stock} kg`;
-          document.getElementById("revenue").innerText = `$${latest.Revenue}`;
-          document.getElementById("expenses").innerText = `$${latest.Expenses}`;
-          document.getElementById("production").innerText = `${latest.Production_Output} items`;
-
-          // Color alerts
-          const meatCard = document.getElementById("meatCard");
-          const flourCard = document.getElementById("flourCard");
-          const revenueCard = document.getElementById("revenueCard");
-          const expensesCard = document.getElementById("expensesCard");
-
-          parseInt(latest.Meat_Stock) < 20
-            ? meatCard.classList.add("bg-red-100")
-            : meatCard.classList.remove("bg-red-100");
-
-          parseInt(latest.Flour_Stock) < 30
-            ? flourCard.classList.add("bg-yellow-100")
-            : flourCard.classList.remove("bg-yellow-100");
-
-          parseFloat(latest.Revenue) < 10000
-            ? revenueCard.classList.add("bg-red-100")
-            : revenueCard.classList.remove("bg-red-100");
-
-          parseFloat(latest.Expenses) > 8000
-            ? expensesCard.classList.add("bg-red-100")
-            : expensesCard.classList.remove("bg-red-100");
-
-          // Chart Data (last 7 days)
-          const last7 = data.slice(-8, -1);
-          const dates = last7.map(r => r.Date);
-          const revenue = last7.map(r => parseFloat(r.Revenue));
-          const expenses = last7.map(r => parseFloat(r.Expenses));
-
-          const ctx = document.getElementById('financeChart').getContext('2d');
-          new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: dates,
-              datasets: [
-                {
-                  label: 'Revenue',
-                  data: revenue,
-                  backgroundColor: 'rgba(34,197,94,0.2)',
-                  borderColor: 'rgba(34,197,94,1)',
-                  borderWidth: 2,
-                  fill: true
-                },
-                {
-                  label: 'Expenses',
-                  data: expenses,
-                  backgroundColor: 'rgba(239,68,68,0.2)',
-                  borderColor: 'rgba(239,68,68,1)',
-                  borderWidth: 2,
-                  fill: true
-                }
-              ]
-            },
-            options: {
-              responsive: true,
-              scales: {
-                yAxes: [{
-                  ticks: {
-                    beginAtZero: true
-                  }
-                }]
-              }
+    try {
+      const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": "Bearer sk-free" // Free tier key
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            {
+              role: "user",
+              content: message
             }
-          });
-        }
-      });
-    });
-
-    // Floating Chat Widget Logic
-    (() => {
-      const chatToggle = document.getElementById("chat-toggle");
-      const chatPopup = document.getElementById("chat-popup");
-      const chatClose = document.getElementById("chat-close");
-      const chatForm = document.getElementById("chat-form");
-      const chatInput = document.getElementById("chat-input");
-      const chatMessages = document.getElementById("chat-messages");
-
-      // Toggle chat popup visibility
-      chatToggle.addEventListener("click", () => {
-        chatPopup.style.display = chatPopup.style.display === "flex" ? "none" : "flex";
-        chatInput.focus();
-      });
-      chatClose.addEventListener("click", () => {
-        chatPopup.style.display = "none";
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
+        }),
       });
 
-      // Append message to chat window
-      function appendMessage(text, sender = "bot") {
-        const msgDiv = document.createElement("div");
-        msgDiv.className = `message ${sender}`;
-        msgDiv.textContent = text;
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Send message to your Netlify function which calls Deepseek API
-      async function sendMessage(message) {
-        appendMessage(message, "user");
+      const data = await response.json();
+      const aiResponse = data.choices[0]?.message?.content || "Sorry, I couldn't process that request.";
 
-        try {
-          const res = await fetch("/.netlify/functions/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt: message }),
-          });
+      appendMessage(aiResponse, "bot");
+    } catch (err) {
+      console.error("Chat error:", err);
+      appendMessage("Sorry, I'm having trouble connecting to the AI service. Please try again later.", "bot");
+    }
+  }
 
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-          const data = await res.json();
-
-          if (data.response) {
-            appendMessage(data.response, "bot");
-          } else {
-            appendMessage("No response from AI.", "bot");
-          }
-        } catch (err) {
-          appendMessage("Error communicating with AI.", "bot");
-          console.error(err);
-        }
-      }
-
-      chatForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const msg = chatInput.value.trim();
-        if (!msg) return;
-        chatInput.value = "";
-        sendMessage(msg);
-      });
-    })();
-  </script>
-
-</body>
-</html>
+  chatForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    chatInput.value = "";
+    sendMessage(msg);
+  });
+})();
