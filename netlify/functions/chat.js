@@ -4,7 +4,7 @@ exports.handler = async (event) => {
   try {
     const { prompt } = JSON.parse(event.body);
 
-    const apiKey = process.env.OPENROUTER_API_KEY; // Set this securely in Netlify environment variables
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -13,7 +13,7 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // or any supported model
+        model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -22,12 +22,12 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ response: result.choices?.[0]?.message?.content || "No response from API" }),
+      body: JSON.stringify({ response: result.choices?.[0]?.message?.content || 'No response' }),
     };
-  } catch (error) {
+  } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ error: err.message }),
     };
   }
 };
