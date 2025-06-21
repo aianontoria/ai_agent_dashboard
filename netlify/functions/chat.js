@@ -18,28 +18,41 @@ exports.handler = async (event) => {
     }
 
     const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Missing OpenRouter API key" }),
+      };
+    }
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
+    const openrouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: 'mistral:instruct',
-        messages: [{ role: 'user', content: prompt }]
+        model: "mistral:instruct", // free model
+        messages: [{ role: "user", content: prompt }]
       })
     });
 
-    const result = await response.json();
+    const result = await openrouterRes.json();
+
+    if (!result.choices || !result.choices[0]) {
+      console.error("OpenRouter response error:", result);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "No valid choices in AI response", result }),
+      };
+    }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        response: result.choices?.[0]?.message?.content || "No AI response."
-      }),
+      body: JSON.stringify({ response: result.choices[0].message.content }),
     };
   } catch (err) {
+    console.error("Function error:", err.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message }),
