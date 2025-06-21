@@ -28,7 +28,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // Make API call to OpenRouter
+    // Make API call to OpenRouter using Meta LLaMA 3 8B instruct model
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -36,7 +36,7 @@ exports.handler = async (event) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "openchat",  // ✅ working, free model
+        model: "meta-llama/llama-3-8b-instruct",
         messages: [
           { role: "system", content: "You are a helpful AI assistant for business analytics." },
           { role: "user", content: prompt }
@@ -46,7 +46,7 @@ exports.handler = async (event) => {
 
     const result = await response.json();
 
-    // Error from OpenRouter
+    // Handle response errors
     if (!result.choices || !result.choices[0]) {
       return {
         statusCode: 500,
