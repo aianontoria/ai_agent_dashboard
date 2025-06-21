@@ -2,6 +2,8 @@ const fetch = require("node-fetch");
 
 exports.handler = async (event) => {
   try {
+    console.log("Received event:", event);
+
     if (!event.body) {
       return {
         statusCode: 400,
@@ -10,6 +12,7 @@ exports.handler = async (event) => {
     }
 
     const { prompt } = JSON.parse(event.body);
+    console.log("Prompt:", prompt);
 
     if (!prompt) {
       return {
@@ -19,6 +22,7 @@ exports.handler = async (event) => {
     }
 
     const apiKey = process.env.HUGGINGFACE_API_KEY;
+    console.log("API key loaded:", !!apiKey);
 
     if (!apiKey) {
       return {
@@ -27,17 +31,17 @@ exports.handler = async (event) => {
       };
     }
 
-    // Use fast, lightweight model for demo
     const response = await fetch("https://api-inference.huggingface.co/models/google/flan-t5-small", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ inputs: prompt })
+      body: JSON.stringify({ inputs: prompt }),
     });
 
     const result = await response.json();
+    console.log("HF API response:", result);
 
     if (result.error) {
       return {
@@ -52,7 +56,6 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({ response: aiResponse }),
     };
-
   } catch (err) {
     console.error("Server error:", err);
     return {
