@@ -22,7 +22,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ response: result.choices?.[0]?.message?.content || 'No response' }),
+      body: JSON.stringify({ response: result.choices?.[0]?.message?.content || "No response" }),
     };
   } catch (err) {
     return {
