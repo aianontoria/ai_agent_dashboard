@@ -1,8 +1,10 @@
 {
-  "name": "aiagentdashboard",
+  "name": "ai-agent-functions",
   "version": "1.0.0",
+  "description": "Netlify function for Hugging Face LLaMA chat",
+  "main": "chat.js",
+  "type": "commonjs",
   "dependencies": {
     "node-fetch": "^2.6.7"
   }
 }
-
