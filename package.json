@@ -1,7 +1,11 @@
 {
-  "name": "netlify-functions",
+  "name": "ai-dashboard",
   "version": "1.0.0",
-  "dependencies": {
-    "node-fetch": "^2.6.7"
+  "description": "AI Dashboard with Deepseek Chatbot",
+  "scripts": {
+    "start": "live-server --port=3000"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
   }
 }
