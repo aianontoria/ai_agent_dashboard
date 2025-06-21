@@ -1,8 +1,7 @@
 {
-  "name": "ai-agent",
+  "name": "ai-agent-chat",
   "version": "1.0.0",
-  "type": "commonjs",
   "dependencies": {
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.9"
   }
 }
