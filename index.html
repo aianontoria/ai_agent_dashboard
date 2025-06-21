@@ -1,127 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <title>AI Dashboard + Floating Chat</title>
+  <title>AI Agent Dashboard with Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://unpkg.com/tailwindcss@^2.2/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    /* Floating chat widget style */
+    #chatWidget {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 320px;
+      max-height: 420px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1000;
+    }
+    #chatHeader {
+      background: #4f46e5;
+      color: white;
+      padding: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #chatBody {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 14px;
+      background: #f9fafb;
+    }
+    #chatInputForm {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+    #chatInput {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+    }
+    #chatInput:focus {
+      outline: none;
+    }
+    #chatSendBtn {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #chatSendBtn:disabled {
+      background: #a5b4fc;
+      cursor: not-allowed;
+    }
+    .chat-message {
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .chat-user {
+      text-align: right;
+      color: #1f2937;
+    }
+    .chat-ai {
+      text-align: left;
+      color: #4b5563;
+      background: #e0e7ff;
+      padding: 6px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      max-width: 85%;
+    }
+  </style>
 </head>
+<body>
 
-<body class="bg-gray-100 text-gray-800 font-sans">
+<!-- Chat Widget -->
+<div id="chatWidget">
+  <div id="chatHeader">AI Assistant 💬</div>
+  <div id="chatBody"></div>
+  <form id="chatInputForm">
+    <input type="text" id="chatInput" autocomplete="off" placeholder="Ask me something..." required />
+    <button type="submit" id="chatSendBtn">Send</button>
+  </form>
+</div>
 
-  <main class="p-6 max-w-6xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">📊 Business Dashboard</h1>
+<script>
+  const chatBody = document.getElementById('chatBody');
+  const chatInputForm = document.getElementById('chatInputForm');
+  const chatInput = document.getElementById('chatInput');
+  const chatSendBtn = document.getElementById('chatSendBtn');
 
-    <!-- KPI Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-      <div class="bg-white p-4 rounded shadow"><h2 class="font-semibold">Meat Stock</h2><p id="meatStock">...</p></div>
-      <div class="bg-white p-4 rounded shadow"><h2 class="font-semibold">Flour Stock</h2><p id="flourStock">...</p></div>
-      <div class="bg-white p-4 rounded shadow"><h2 class="font-semibold">Revenue</h2><p id="revenue">...</p></div>
-      <div class="bg-white p-4 rounded shadow"><h2 class="font-semibold">Expenses</h2><p id="expenses">...</p></div>
-    </div>
+  chatInputForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    <!-- Chart -->
-    <div class="bg-white p-6 rounded shadow">
-      <h2 class="text-xl font-semibold mb-4">7-Day Revenue & Expenses</h2>
-      <canvas id="financeChart" height="120"></canvas>
-    </div>
-  </main>
+    const userMessage = chatInput.value.trim();
+    if (!userMessage) return;
 
-  <!-- Floating Chat Widget -->
-  <div id="chatToggle" class="fixed bottom-4 right-4 z-50 bg-blue-600 text-white rounded-full p-4 shadow-lg cursor-pointer hover:bg-blue-700">
-    💬
-  </div>
+    appendMessage(userMessage, 'user');
+    chatInput.value = '';
+    chatSendBtn.disabled = true;
 
-  <div id="chatBox" class="hidden fixed bottom-20 right-4 z-50 w-80 bg-white border rounded-lg shadow-lg flex flex-col max-h-[80vh]">
-    <div class="bg-blue-600 text-white px-4 py-2 rounded-t">AI Agent</div>
-    <div id="chatMessages" class="p-3 overflow-y-auto flex-1 text-sm space-y-2"></div>
-    <textarea id="chatInput" placeholder="Ask me anything..." class="p-2 border-t resize-none focus:outline-none h-20"></textarea>
-    <button id="sendBtn" class="bg-blue-600 text-white px-4 py-2 hover:bg-blue-700">Send</button>
-  </div>
-
-  <script>
-    // Load CSV and populate data
-    const csvURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrqB3aE-D19ORDD5MPoYF3EDLXNZuRgJzql3idB6wpB2w73X69Vb_Kx2zrQ_RFt2SdNBDZAllggRbV/pub?gid=0&single=true&output=csv';
-    Papa.parse(csvURL, {
-      download: true,
-      header: true,
-      complete: ({ data }) => {
-        const latest = data[data.length - 2];
-        document.getElementById("meatStock").innerText = `${latest.Meat_Stock} units`;
-        document.getElementById("flourStock").innerText = `${latest.Flour_Stock} kg`;
-        document.getElementById("revenue").innerText = `$${latest.Revenue}`;
-        document.getElementById("expenses").innerText = `$${latest.Expenses}`;
-
-        const chartCtx = document.getElementById("financeChart").getContext("2d");
-        new Chart(chartCtx, {
-          type: 'line',
-          data: {
-            labels: data.slice(-7).map(r => r.Date),
-            datasets: [
-              {
-                label: 'Revenue',
-                data: data.slice(-7).map(r => parseInt(r.Revenue)),
-                backgroundColor: 'rgba(34,197,94,0.2)',
-                borderColor: 'rgba(34,197,94,1)',
-                fill: true,
-              },
-              {
-                label: 'Expenses',
-                data: data.slice(-7).map(r => parseInt(r.Expenses)),
-                backgroundColor: 'rgba(239,68,68,0.2)',
-                borderColor: 'rgba(239,68,68,1)',
-                fill: true,
-              }
-            ]
-          }
-        });
-      }
-    });
-
-    // Chat toggle
-    const chatBox = document.getElementById('chatBox');
-    document.getElementById('chatToggle').onclick = () => {
-      chatBox.classList.toggle('hidden');
-    };
-
-    // Chat interaction
-    const chatInput = document.getElementById('chatInput');
-    const chatMessages = document.getElementById('chatMessages');
-    document.getElementById('sendBtn').onclick = async () => {
-      const message = chatInput.value.trim();
-      if (!message) return;
-
-      chatInput.value = '';
-      appendMsg('user', message);
-      appendMsg('ai', '...');
-
-      const res = await fetch('/.netlify/functions/chat', {
+    try {
+      const response = await fetch('/.netlify/functions/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: message })
+        body: JSON.stringify({ prompt: userMessage }),
       });
 
-      const { response } = await res.json();
-      updateLastBotMessage(response || "No response.");
-    };
+      if (!response.ok) throw new Error('Network response not ok');
 
-    function appendMsg(sender, text) {
-      const msg = document.createElement('div');
-      msg.className = sender === 'user' ? 'text-right' : 'text-left';
-      msg.innerHTML = `<span class="inline-block px-3 py-2 rounded ${sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200'}">${text}</span>`;
-      chatMessages.appendChild(msg);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+      const data = await response.json();
 
-    function updateLastBotMessage(text) {
-      const botMsgs = [...chatMessages.querySelectorAll('.text-left')];
-      const last = botMsgs[botMsgs.length - 1];
-      if (last) last.querySelector('span').textContent = text;
+      if (data.error) {
+        appendMessage('Error: ' + data.error, 'ai');
+      } else {
+        appendMessage(data.response, 'ai');
+      }
+    } catch (err) {
+      appendMessage('Error communicating with AI.', 'ai');
+      console.error(err);
+    } finally {
+      chatSendBtn.disabled = false;
+      chatBody.scrollTop = chatBody.scrollHeight;
     }
-  </script>
+  });
+
+  function appendMessage(message, sender) {
+    const div = document.createElement('div');
+    div.classList.add('chat-message');
+    if (sender === 'user') {
+      div.classList.add('chat-user');
+      div.textContent = message;
+    } else {
+      div.classList.add('chat-ai');
+      div.textContent = message;
+    }
+    chatBody.appendChild(div);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+</script>
 
 </body>
 </html>
