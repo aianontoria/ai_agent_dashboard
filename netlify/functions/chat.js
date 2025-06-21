@@ -2,6 +2,7 @@ const fetch = require("node-fetch");
 
 exports.handler = async (event) => {
   try {
+    // Validate incoming request
     if (!event.body) {
       return {
         statusCode: 400,
@@ -10,17 +11,25 @@ exports.handler = async (event) => {
     }
 
     const { prompt } = JSON.parse(event.body);
-    const apiKey = process.env.HUGGINGFACE_API_KEY;
 
-    if (!prompt || !apiKey) {
+    if (!prompt) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Missing prompt or Hugging Face API key." }),
+        body: JSON.stringify({ error: "Prompt is missing." }),
       };
     }
 
-    // 🧠 Use Falcon-7B-Instruct (chat-ready model)
-    const response = await fetch("https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct", {
+    const apiKey = process.env.HUGGINGFACE_API_KEY;
+
+    if (!apiKey) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Missing Hugging Face API key." }),
+      };
+    }
+
+    // ✅ Use Zephyr-7B-Beta (public chat model)
+    const response = await fetch("https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -31,18 +40,20 @@ exports.handler = async (event) => {
 
     const result = await response.json();
 
+    // Error handling for Hugging Face response
     if (result.error) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: result.error }),
+        body: JSON.stringify({ error: `Hugging Face API error: ${result.error}` }),
       };
     }
 
-    const aiResponse = result.generated_text || result[0]?.generated_text || "No response generated.";
+    // Grab response text
+    const aiResponse = result.generated_text || result[0]?.generated_text || "No response from AI.";
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ response: aiResponse })
+      body: JSON.stringify({ response: aiResponse }),
     };
 
   } catch (err) {
