@@ -16,16 +16,16 @@
     <h1 class="text-2xl font-bold text-gray-800 mb-6">📈 Business Dashboard</h1>
 
     <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
       <div id="meatCard" class="bg-white p-4 rounded-lg shadow">
         <h2 class="text-xl font-semibold">Meat Stock</h2>
         <p id="meatStock" class="mt-2 text-gray-600 text-lg">Loading...</p>
       </div>
       <div id="flourCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Meat Stock</h2>
+        <h2 class="text-xl font-semibold">Flour Stock</h2>
         <p id="flourStock" class="mt-2 text-gray-600 text-lg">Loading...</p>
       </div>
-      <div class="bg-white p-4 rounded-lg shadow">
+      <div id="revenueCard" class="bg-white p-4 rounded-lg shadow">
         <h2 class="text-xl font-semibold">Revenue</h2>
         <p id="revenue" class="mt-2 text-gray-600 text-lg">Loading...</p>
       </div>
@@ -56,7 +56,6 @@
   <!-- JavaScript -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      // 📍 Replace this with your published Google Sheets CSV link
       const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrqB3aE-D19ORDD5MPoYF3EDLXNZuRgJzql3idB6wpB2w73X69Vb_Kx2zrQ_RFt2SdNBDZAllggRbV/pub?gid=0&single=true&output=csv';
 
       Papa.parse(sheetURL, {
@@ -65,22 +64,38 @@
         complete: function (results) {
           const data = results.data;
           const headers = Object.keys(data[0]);
-          const latest = data[data.length - 2]; // second to last, in case of empty last row
+          const latest = data[data.length - 2]; // skip empty last row if present
 
           // Update KPI values
           document.getElementById("meatStock").innerText = `${latest.Meat_Stock} units`;
+          document.getElementById("flourStock").innerText = `${latest.Flour_Stock} kg`;
           document.getElementById("revenue").innerText = `$${latest.Revenue}`;
           document.getElementById("production").innerText = `${latest.Production_Output} items`;
 
-          // Color alert for low stock
+          // Color alerts
           const meatCard = document.getElementById("meatCard");
+          const flourCard = document.getElementById("flourCard");
+          const revenueCard = document.getElementById("revenueCard");
+
           if (parseInt(latest.Meat_Stock) < 20) {
             meatCard.classList.add("bg-red-100");
           } else {
             meatCard.classList.remove("bg-red-100");
           }
 
-          // Table setup
+          if (parseInt(latest.Flour_Stock) < 30) {
+            flourCard.classList.add("bg-yellow-100");
+          } else {
+            flourCard.classList.remove("bg-yellow-100");
+          }
+
+          if (parseInt(latest.Revenue) < 10000) {
+            revenueCard.classList.add("bg-red-100");
+          } else {
+            revenueCard.classList.remove("bg-red-100");
+          }
+
+          // Table
           const headerRow = document.getElementById("csvHeaderRow");
           const tableBody = document.getElementById("csvTableBody");
           headers.forEach(header => {
@@ -89,6 +104,7 @@
             th.textContent = header;
             headerRow.appendChild(th);
           });
+
           data.forEach(row => {
             const tr = document.createElement("tr");
             headers.forEach(key => {
@@ -100,7 +116,7 @@
             tableBody.appendChild(tr);
           });
 
-          // Line chart setup
+          // Chart
           const dates = data.map(r => r.Date).slice(-7);
           const revenue = data.map(r => parseInt(r.Revenue)).slice(-7);
           const expenses = data.map(r => parseInt(r.Expenses)).slice(-7);
