@@ -21,13 +21,30 @@ exports.handler = async (event) => {
       }),
     });
 
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("Deepseek API error:", text);
+      return {
+        statusCode: 502,
+        body: JSON.stringify({ error: "Error from Deepseek API", details: text }),
+      };
+    }
+
     const data = await response.json();
+
+    if (!data.response) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "No response from Deepseek API." }),
+      };
+    }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ response: data.response || "No response." }),
+      body: JSON.stringify({ response: data.response }),
     };
   } catch (err) {
+    console.error("Server error:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Server error", details: err.message }),
