@@ -2,7 +2,6 @@ const fetch = require("node-fetch");
 
 exports.handler = async (event) => {
   try {
-    // Validate incoming request
     if (!event.body) {
       return {
         statusCode: 400,
@@ -28,8 +27,8 @@ exports.handler = async (event) => {
       };
     }
 
-    // ✅ Use Zephyr-7B-Beta (public chat model)
-    const response = await fetch("https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta", {
+    // Use fast, lightweight model for demo
+    const response = await fetch("https://api-inference.huggingface.co/models/google/flan-t5-small", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -40,7 +39,6 @@ exports.handler = async (event) => {
 
     const result = await response.json();
 
-    // Error handling for Hugging Face response
     if (result.error) {
       return {
         statusCode: 500,
@@ -48,7 +46,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Grab response text
     const aiResponse = result.generated_text || result[0]?.generated_text || "No response from AI.";
 
     return {
