@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <title>AI Agent Dashboard with CSV + Chart</title>
@@ -9,14 +8,13 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
-
 <body class="bg-gray-100 font-sans">
 
   <main class="p-6 max-w-6xl mx-auto mt-10">
     <h1 class="text-2xl font-bold text-gray-800 mb-6">📈 Business Dashboard</h1>
 
     <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-10">
       <div id="meatCard" class="bg-white p-4 rounded-lg shadow">
         <h2 class="text-xl font-semibold">Meat Stock</h2>
         <p id="meatStock" class="mt-2 text-gray-600 text-lg">Loading...</p>
@@ -29,7 +27,11 @@
         <h2 class="text-xl font-semibold">Revenue</h2>
         <p id="revenue" class="mt-2 text-gray-600 text-lg">Loading...</p>
       </div>
-      <div class="bg-white p-4 rounded-lg shadow">
+      <div id="expensesCard" class="bg-white p-4 rounded-lg shadow">
+        <h2 class="text-xl font-semibold">Expenses</h2>
+        <p id="expenses" class="mt-2 text-gray-600 text-lg">Loading...</p>
+      </div>
+      <div id="productionCard" class="bg-white p-4 rounded-lg shadow">
         <h2 class="text-xl font-semibold">Production</h2>
         <p id="production" class="mt-2 text-gray-600 text-lg">Loading...</p>
       </div>
@@ -40,20 +42,8 @@
       <h2 class="text-xl font-semibold mb-4">📊 Revenue & Expenses (Last 7 Days)</h2>
       <canvas id="financeChart" height="120"></canvas>
     </div>
-
-    <!-- Table -->
-    <div class="bg-white p-6 rounded-lg shadow overflow-auto">
-      <h2 class="text-xl font-semibold mb-4">📄 Raw Data</h2>
-      <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-700">
-        <thead class="bg-gray-100">
-          <tr id="csvHeaderRow"></tr>
-        </thead>
-        <tbody id="csvTableBody" class="bg-white divide-y divide-gray-100"></tbody>
-      </table>
-    </div>
   </main>
 
-  <!-- JavaScript -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrqB3aE-D19ORDD5MPoYF3EDLXNZuRgJzql3idB6wpB2w73X69Vb_Kx2zrQ_RFt2SdNBDZAllggRbV/pub?gid=0&single=true&output=csv';
@@ -63,63 +53,44 @@
         header: true,
         complete: function (results) {
           const data = results.data;
-          const headers = Object.keys(data[0]);
+          if (!data || data.length < 2) return;
+
           const latest = data[data.length - 2]; // skip empty last row if present
 
           // Update KPI values
           document.getElementById("meatStock").innerText = `${latest.Meat_Stock} units`;
           document.getElementById("flourStock").innerText = `${latest.Flour_Stock} kg`;
           document.getElementById("revenue").innerText = `$${latest.Revenue}`;
+          document.getElementById("expenses").innerText = `$${latest.Expenses}`;
           document.getElementById("production").innerText = `${latest.Production_Output} items`;
 
           // Color alerts
           const meatCard = document.getElementById("meatCard");
           const flourCard = document.getElementById("flourCard");
           const revenueCard = document.getElementById("revenueCard");
+          const expensesCard = document.getElementById("expensesCard");
 
-          if (parseInt(latest.Meat_Stock) < 20) {
-            meatCard.classList.add("bg-red-100");
-          } else {
-            meatCard.classList.remove("bg-red-100");
-          }
+          parseInt(latest.Meat_Stock) < 20
+            ? meatCard.classList.add("bg-red-100")
+            : meatCard.classList.remove("bg-red-100");
 
-          if (parseInt(latest.Flour_Stock) < 30) {
-            flourCard.classList.add("bg-yellow-100");
-          } else {
-            flourCard.classList.remove("bg-yellow-100");
-          }
+          parseInt(latest.Flour_Stock) < 30
+            ? flourCard.classList.add("bg-yellow-100")
+            : flourCard.classList.remove("bg-yellow-100");
 
-          if (parseInt(latest.Revenue) < 10000) {
-            revenueCard.classList.add("bg-red-100");
-          } else {
-            revenueCard.classList.remove("bg-red-100");
-          }
+          parseFloat(latest.Revenue) < 10000
+            ? revenueCard.classList.add("bg-red-100")
+            : revenueCard.classList.remove("bg-red-100");
 
-          // Table
-          const headerRow = document.getElementById("csvHeaderRow");
-          const tableBody = document.getElementById("csvTableBody");
-          headers.forEach(header => {
-            const th = document.createElement("th");
-            th.className = "px-4 py-2 text-left";
-            th.textContent = header;
-            headerRow.appendChild(th);
-          });
+          parseFloat(latest.Expenses) > 8000
+            ? expensesCard.classList.add("bg-red-100")
+            : expensesCard.classList.remove("bg-red-100");
 
-          data.forEach(row => {
-            const tr = document.createElement("tr");
-            headers.forEach(key => {
-              const td = document.createElement("td");
-              td.className = "px-4 py-2 whitespace-nowrap";
-              td.textContent = row[key];
-              tr.appendChild(td);
-            });
-            tableBody.appendChild(tr);
-          });
-
-          // Chart
-          const dates = data.map(r => r.Date).slice(-7);
-          const revenue = data.map(r => parseInt(r.Revenue)).slice(-7);
-          const expenses = data.map(r => parseInt(r.Expenses)).slice(-7);
+          // Chart Data (last 7 days)
+          const last7 = data.slice(-8, -1); // last 7 non-empty rows
+          const dates = last7.map(r => r.Date);
+          const revenue = last7.map(r => parseFloat(r.Revenue));
+          const expenses = last7.map(r => parseFloat(r.Expenses));
 
           const ctx = document.getElementById('financeChart').getContext('2d');
           new Chart(ctx, {
@@ -160,7 +131,5 @@
       });
     });
   </script>
-
 </body>
-
 </html>
