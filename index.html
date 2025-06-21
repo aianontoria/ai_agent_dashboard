@@ -3,197 +3,125 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>AI Agent Dashboard with CSV + Chart + AI Chat</title>
+  <title>AI Dashboard + Floating Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" />
+  <link href="https://unpkg.com/tailwindcss@^2.2/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100 text-gray-800 font-sans">
 
-  <main class="p-6 max-w-6xl mx-auto mt-10">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">📈 Business Dashboard</h1>
+  <main class="p-6 max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">📊 Business Dashboard</h1>
 
     <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-10">
-      <div id="meatCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Meat Stock</h2>
-        <p id="meatStock" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="flourCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Flour Stock</h2>
-        <p id="flourStock" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="revenueCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Revenue</h2>
-        <p id="revenue" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="expensesCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Expenses</h2>
-        <p id="expenses" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
-      <div id="productionCard" class="bg-white p-4 rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Production</h2>
-        <p id="production" class="mt-2 text-gray-600 text-lg">Loading...</p>
-      </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <div class="bg-white p-4 rounded shadow"><h2 class="font-semibold">Meat Stock</h2><p id="meatStock">...</p></div>
+      <div class="bg-white p-4 rounded shadow"><h2 class="font-semibold">Flour Stock</h2><p id="flourStock">...</p></div>
+      <div class="bg-white p-4 rounded shadow"><h2 class="font-semibold">Revenue</h2><p id="revenue">...</p></div>
+      <div class="bg-white p-4 rounded shadow"><h2 class="font-semibold">Expenses</h2><p id="expenses">...</p></div>
     </div>
 
     <!-- Chart -->
-    <div class="bg-white p-6 rounded-lg shadow mb-10">
-      <h2 class="text-xl font-semibold mb-4">📊 Revenue & Expenses (Last 7 Days)</h2>
+    <div class="bg-white p-6 rounded shadow">
+      <h2 class="text-xl font-semibold mb-4">7-Day Revenue & Expenses</h2>
       <canvas id="financeChart" height="120"></canvas>
-    </div>
-
-    <!-- AI Agent Chatbox -->
-    <div class="bg-white p-6 rounded-lg shadow">
-      <h2 class="text-xl font-semibold mb-4">🤖 AI Agent Chat</h2>
-
-      <div id="chatWindow" class="h-64 overflow-y-auto border border-gray-300 p-4 mb-4 rounded bg-gray-50">
-        <!-- Chat messages will appear here -->
-      </div>
-
-      <textarea id="userInput" class="w-full border border-gray-300 rounded p-2 mb-2" rows="3" placeholder="Type your message here..."></textarea>
-
-      <button id="sendBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Send</button>
     </div>
   </main>
 
+  <!-- Floating Chat Widget -->
+  <div id="chatToggle" class="fixed bottom-4 right-4 z-50 bg-blue-600 text-white rounded-full p-4 shadow-lg cursor-pointer hover:bg-blue-700">
+    💬
+  </div>
+
+  <div id="chatBox" class="hidden fixed bottom-20 right-4 z-50 w-80 bg-white border rounded-lg shadow-lg flex flex-col max-h-[80vh]">
+    <div class="bg-blue-600 text-white px-4 py-2 rounded-t">AI Agent</div>
+    <div id="chatMessages" class="p-3 overflow-y-auto flex-1 text-sm space-y-2"></div>
+    <textarea id="chatInput" placeholder="Ask me anything..." class="p-2 border-t resize-none focus:outline-none h-20"></textarea>
+    <button id="sendBtn" class="bg-blue-600 text-white px-4 py-2 hover:bg-blue-700">Send</button>
+  </div>
+
   <script>
-    // Existing CSV + Chart code
-    document.addEventListener("DOMContentLoaded", function () {
-      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrqB3aE-D19ORDD5MPoYF3EDLXNZuRgJzql3idB6wpB2w73X69Vb_Kx2zrQ_RFt2SdNBDZAllggRbV/pub?gid=0&single=true&output=csv';
+    // Load CSV and populate data
+    const csvURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTrqB3aE-D19ORDD5MPoYF3EDLXNZuRgJzql3idB6wpB2w73X69Vb_Kx2zrQ_RFt2SdNBDZAllggRbV/pub?gid=0&single=true&output=csv';
+    Papa.parse(csvURL, {
+      download: true,
+      header: true,
+      complete: ({ data }) => {
+        const latest = data[data.length - 2];
+        document.getElementById("meatStock").innerText = `${latest.Meat_Stock} units`;
+        document.getElementById("flourStock").innerText = `${latest.Flour_Stock} kg`;
+        document.getElementById("revenue").innerText = `$${latest.Revenue}`;
+        document.getElementById("expenses").innerText = `$${latest.Expenses}`;
 
-      Papa.parse(sheetURL, {
-        download: true,
-        header: true,
-        complete: function (results) {
-          const data = results.data;
-          const latest = data[data.length - 2]; // skip empty last row
-
-          // KPIs
-          document.getElementById("meatStock").innerText = `${latest.Meat_Stock} units`;
-          document.getElementById("flourStock").innerText = `${latest.Flour_Stock} kg`;
-          document.getElementById("revenue").innerText = `$${latest.Revenue}`;
-          document.getElementById("expenses").innerText = `$${latest.Expenses}`;
-          document.getElementById("production").innerText = `${latest.Production_Output} items`;
-
-          // Color alerts
-          const meat = parseInt(latest.Meat_Stock);
-          const flour = parseInt(latest.Flour_Stock);
-          const revenue = parseInt(latest.Revenue);
-          const expenses = parseInt(latest.Expenses);
-
-          const meatCard = document.getElementById("meatCard");
-          const flourCard = document.getElementById("flourCard");
-          const revenueCard = document.getElementById("revenueCard");
-          const expensesCard = document.getElementById("expensesCard");
-
-          if (meat < 20) meatCard.classList.add("bg-red-100");
-          if (flour < 30) flourCard.classList.add("bg-yellow-100");
-          if (revenue < 10000) revenueCard.classList.add("bg-red-100");
-          if (expenses > 5000) expensesCard.classList.add("bg-red-100");
-
-          // Chart setup
-          const dates = data.map(r => r.Date).slice(-7);
-          const revenues = data.map(r => parseInt(r.Revenue)).slice(-7);
-          const expensesData = data.map(r => parseInt(r.Expenses)).slice(-7);
-
-          const ctx = document.getElementById('financeChart').getContext('2d');
-          new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: dates,
-              datasets: [
-                {
-                  label: 'Revenue',
-                  data: revenues,
-                  backgroundColor: 'rgba(34,197,94,0.2)',
-                  borderColor: 'rgba(34,197,94,1)',
-                  borderWidth: 2,
-                  fill: true
-                },
-                {
-                  label: 'Expenses',
-                  data: expensesData,
-                  backgroundColor: 'rgba(239,68,68,0.2)',
-                  borderColor: 'rgba(239,68,68,1)',
-                  borderWidth: 2,
-                  fill: true
-                }
-              ]
-            },
-            options: {
-              responsive: true,
-              scales: {
-                yAxes: [{
-                  ticks: {
-                    beginAtZero: true
-                  }
-                }]
+        const chartCtx = document.getElementById("financeChart").getContext("2d");
+        new Chart(chartCtx, {
+          type: 'line',
+          data: {
+            labels: data.slice(-7).map(r => r.Date),
+            datasets: [
+              {
+                label: 'Revenue',
+                data: data.slice(-7).map(r => parseInt(r.Revenue)),
+                backgroundColor: 'rgba(34,197,94,0.2)',
+                borderColor: 'rgba(34,197,94,1)',
+                fill: true,
+              },
+              {
+                label: 'Expenses',
+                data: data.slice(-7).map(r => parseInt(r.Expenses)),
+                backgroundColor: 'rgba(239,68,68,0.2)',
+                borderColor: 'rgba(239,68,68,1)',
+                fill: true,
               }
-            }
-          });
-        }
-      });
+            ]
+          }
+        });
+      }
     });
 
-    // AI Chatbox code
-    const chatWindow = document.getElementById('chatWindow');
-    const userInput = document.getElementById('userInput');
-    const sendBtn = document.getElementById('sendBtn');
+    // Chat toggle
+    const chatBox = document.getElementById('chatBox');
+    document.getElementById('chatToggle').onclick = () => {
+      chatBox.classList.toggle('hidden');
+    };
 
-    function appendMessage(sender, text) {
-      const messageElem = document.createElement('div');
-      messageElem.className = sender === 'user' ? 'text-right mb-2' : 'text-left mb-2';
-      messageElem.innerHTML = `<span class="inline-block px-3 py-2 rounded-lg ${sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-800'}">${text}</span>`;
-      chatWindow.appendChild(messageElem);
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-
-    async function sendMessage() {
-      const message = userInput.value.trim();
+    // Chat interaction
+    const chatInput = document.getElementById('chatInput');
+    const chatMessages = document.getElementById('chatMessages');
+    document.getElementById('sendBtn').onclick = async () => {
+      const message = chatInput.value.trim();
       if (!message) return;
 
-      appendMessage('user', message);
-      userInput.value = '';
-      appendMessage('agent', '...typing');
+      chatInput.value = '';
+      appendMsg('user', message);
+      appendMsg('ai', '...');
 
-      try {
-        const response = await fetch('/.netlify/functions/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: message })
-        });
+      const res = await fetch('/.netlify/functions/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: message })
+      });
 
-        const data = await response.json();
+      const { response } = await res.json();
+      updateLastBotMessage(response || "No response.");
+    };
 
-        // Remove the '...typing' message before adding real response
-        const typingElem = chatWindow.querySelector('div:last-child');
-        if (typingElem && typingElem.textContent === '...typing') {
-          chatWindow.removeChild(typingElem);
-        }
-
-        appendMessage('agent', data.response || 'Sorry, no response.');
-      } catch (error) {
-        const typingElem = chatWindow.querySelector('div:last-child');
-        if (typingElem && typingElem.textContent === '...typing') {
-          chatWindow.removeChild(typingElem);
-        }
-        appendMessage('agent', 'Error: ' + error.message);
-      }
+    function appendMsg(sender, text) {
+      const msg = document.createElement('div');
+      msg.className = sender === 'user' ? 'text-right' : 'text-left';
+      msg.innerHTML = `<span class="inline-block px-3 py-2 rounded ${sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200'}">${text}</span>`;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    sendBtn.addEventListener('click', sendMessage);
-
-    userInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
+    function updateLastBotMessage(text) {
+      const botMsgs = [...chatMessages.querySelectorAll('.text-left')];
+      const last = botMsgs[botMsgs.length - 1];
+      if (last) last.querySelector('span').textContent = text;
+    }
   </script>
 
 </body>
-
 </html>
