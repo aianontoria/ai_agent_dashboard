@@ -5,266 +5,736 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIAN Dashboard</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
-            background-color: #121212;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
         }
-        header {
+        
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 350px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+        
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: linear-gradient(90deg, #1f1f1f 0%, #2a2a2a 100%);
+            border-bottom: 2px solid #4caf50;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 10px 20px;
-            background-color: #1f1f1f;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
-        header .logo {
+        
+        .logo {
             font-weight: bold;
-            font-size: 1.5em;
+            font-size: 1.8em;
+            color: #4caf50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+        
+        .header-nav {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .header-nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .header-nav a:hover {
+            background-color: rgba(76, 175, 80, 0.1);
             color: #4caf50;
         }
-        nav a {
-            color: #e0e0e0;
-            margin: 0 10px;
-            text-decoration: none;
-        }
-        nav a:hover {
-            text-decoration: underline;
-        }
-        .top-right {
+        
+        .header-actions {
             display: flex;
             align-items: center;
+            gap: 15px;
         }
-        .top-right > * {
-            margin-left: 15px;
+        
+        .header-actions > div {
+            padding: 8px;
+            border-radius: 50%;
             cursor: pointer;
-        }
-        .sidebar {
-            width: 220px;
-            background-color: #1f1f1f;
-            height: calc(100vh - 50px);
-            position: fixed;
-            top: 50px;
-            left: 0;
-            padding: 20px 10px;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
-        .sidebar a {
-            display: block;
-            color: #e0e0e0;
-            padding: 10px 15px;
-            margin-bottom: 5px;
-            border-radius: 8px;
-            text-decoration: none;
-        }
-        .sidebar a:hover, .sidebar a.active {
-            background-color: #4caf50;
-            color: #121212;
-        }
-        main {
-            margin-left: 240px;
-            padding: 20px;
-        }
-        .kpi-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .kpi-card {
-            background-color: #2a2a2a;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
-            text-align: center;
-        }
-        .kpi-card h3 {
-            margin: 0 0 10px 0;
+            transition: all 0.3s ease;
             font-size: 1.2em;
         }
-        .kpi-card p {
-            font-size: 2em;
-            margin: 0;
-            font-weight: bold;
-            color: #4caf50;
+        
+        .header-actions > div:hover {
+            background-color: rgba(76, 175, 80, 0.1);
+            transform: scale(1.1);
         }
-        .quick-links {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .quick-link {
-            background-color: #4caf50;
-            padding: 10px 15px;
-            border-radius: 20px;
-            color: #121212;
-            text-decoration: none;
-            font-weight: bold;
-            flex: 1;
-            text-align: center;
-            transition: background-color 0.3s ease;
-        }
-        .quick-link:hover {
-            background-color: #388e3c;
-        }
-        .notifications {
-            background-color: #2a2a2a;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        .notification-item {
-            padding: 8px 10px;
-            border-bottom: 1px solid #444;
-        }
-        .notification-item:last-child {
-            border-bottom: none;
-        }
-        .ai-chat {
-            background-color: #2a2a2a;
-            border-radius: 12px;
-            padding: 15px;
-            max-height: 300px;
+        
+        /* Left Panel */
+        .left-panel {
+            background: linear-gradient(180deg, #1f1f1f 0%, #2a2a2a 100%);
+            border-right: 1px solid #333;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
         }
+        
+        .user-info {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            background: rgba(76, 175, 80, 0.05);
+        }
+        
+        .company-logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .username {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #e0e0e0;
+            margin-bottom: 5px;
+        }
+        
+        .user-role {
+            color: #4caf50;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .sidebar-nav {
+            padding: 20px 10px;
+            flex-grow: 1;
+        }
+        
+        .sidebar-nav a {
+            display: block;
+            color: #e0e0e0;
+            padding: 12px 20px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 500;
+        }
+        
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: #121212;
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        /* Center Panel */
+        .center-panel {
+            padding: 25px;
+            overflow-y: auto;
+            background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+        }
+        
+        .kpi-section {
+            margin-bottom: 25px;
+        }
+        
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .kpi-card {
+            background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.2);
+            border-color: #4caf50;
+        }
+        
+        .kpi-card h3 {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            color: #b0b0b0;
+            font-weight: 600;
+        }
+        
+        .kpi-card p {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #4caf50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+        
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .quick-link {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            padding: 15px 20px;
+            border-radius: 25px;
+            color: #121212;
+            text-decoration: none;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .quick-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+        }
+        
+        .recent-activity {
+            background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #444;
+        }
+        
+        .recent-activity h3 {
+            margin-bottom: 15px;
+            color: #4caf50;
+            font-size: 1.2em;
+        }
+        
+        .recent-activity ul {
+            list-style: none;
+        }
+        
+        .recent-activity li {
+            padding: 10px 0;
+            border-bottom: 1px solid #444;
+            color: #b0b0b0;
+            transition: color 0.3s ease;
+        }
+        
+        .recent-activity li:hover {
+            color: #e0e0e0;
+        }
+        
+        .recent-activity li:last-child {
+            border-bottom: none;
+        }
+        
+        /* Right Panel */
+        .right-panel {
+            background: linear-gradient(180deg, #1f1f1f 0%, #2a2a2a 100%);
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+        }
+        
+        .chat-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .chat-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #444;
+        }
+        
+        .chat-header h3 {
+            color: #4caf50;
+            font-size: 1.2em;
+            margin-right: auto;
+        }
+        
+        .chat-status {
+            width: 10px;
+            height: 10px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
         .chat-messages {
             flex-grow: 1;
             overflow-y: auto;
-            margin-bottom: 10px;
-        }
-        .chat-message {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            min-height: 150px;
+        }
+        
+        .chat-message {
+            margin-bottom: 12px;
+            padding: 12px 15px;
             border-radius: 15px;
-            max-width: 70%;
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
         }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         .chat-message.user {
-            background-color: #4caf50;
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
             color: #121212;
-            align-self: flex-end;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
         }
+        
         .chat-message.ai {
-            background-color: #444;
+            background: linear-gradient(135deg, #444 0%, #555 100%);
             color: #e0e0e0;
-            align-self: flex-start;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
         }
+        
+        .chat-input-container {
+            position: relative;
+        }
+        
         .chat-input {
             display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
         }
+        
         .chat-input input {
             flex-grow: 1;
-            padding: 10px;
-            border-radius: 15px 0 0 15px;
-            border: none;
+            padding: 12px 15px;
+            border-radius: 25px;
+            border: 2px solid #444;
+            background: #333;
+            color: #e0e0e0;
             outline: none;
+            transition: all 0.3s ease;
         }
-        .chat-input button {
-            background-color: #4caf50;
+        
+        .chat-input input:focus {
+            border-color: #4caf50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+        
+        .input-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .input-btn {
+            padding: 12px;
             border: none;
-            padding: 10px 15px;
-            border-radius: 0 15px 15px 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
             color: #121212;
-            font-weight: bold;
             cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .recent-activity {
-            background-color: #2a2a2a;
-            border-radius: 12px;
-            padding: 15px;
+        
+        .input-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
         }
-        .recent-activity h3 {
-            margin-top: 0;
+        
+        .recent-conversations {
+            margin-bottom: 20px;
         }
-        .recent-activity ul {
-            list-style: none;
-            padding-left: 0;
-            max-height: 150px;
-            overflow-y: auto;
+        
+        .recent-conversations h4 {
+            color: #4caf50;
+            margin-bottom: 10px;
+            font-size: 1em;
         }
-        .recent-activity li {
-            padding: 8px 10px;
-            border-bottom: 1px solid #444;
+        
+        .conversation-item {
+            padding: 10px 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 0.9em;
         }
-        .recent-activity li:last-child {
-            border-bottom: none;
+        
+        .conversation-item:hover {
+            background: rgba(76, 175, 80, 0.1);
+            border-left-color: #4caf50;
+            transform: translateX(3px);
+        }
+        
+        .view-history-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #444 0%, #555 100%);
+            border: 1px solid #666;
+            border-radius: 8px;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+        
+        .view-history-btn:hover {
+            background: linear-gradient(135deg, #555 0%, #666 100%);
+            border-color: #4caf50;
+        }
+        
+        .notifications-section {
+            padding: 20px;
+            border-top: 1px solid #333;
+        }
+        
+        .notifications-section h4 {
+            color: #4caf50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .notification-item {
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #4caf50;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+        
+        .notification-item:hover {
+            background: rgba(76, 175, 80, 0.1);
+            transform: translateX(3px);
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #333;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #4caf50;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #66bb6a;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: 250px 1fr 300px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr;
+            }
+            
+            .left-panel, .right-panel {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo">AIAN</div>
-        <nav>
-            <a href="#dashboard">Dashboard</a>
-            <a href="#finance">Finance</a>
-            <a href="#inventory">Inventory</a>
-            <a href="#forecasting">Forecasting</a>
-            <a href="#knowledge-base">Knowledge Base</a>
-        </nav>
-        <div class="top-right">
-            <div title="Notifications">🔔</div>
-            <div title="Settings">⚙️</div>
-            <div title="User Profile">👤</div>
-        </div>
-    </header>
-    <div class="sidebar">
-        <a href="#home" class="active">Home</a>
-        <a href="#profile">Profile</a>
-        <a href="#saved-conversations">Saved Conversations</a>
-        <a href="#permissions">Permissions</a>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">AIAN</div>
+            <nav class="header-nav">
+                <a href="#dashboard">Dashboard</a>
+                <a href="#finance">Finance</a>
+                <a href="#inventory">Inventory</a>
+                <a href="#forecasting">Forecasting</a>
+                <a href="#knowledge-base">Knowledge Base</a>
+            </nav>
+            <div class="header-actions">
+                <div title="Notifications">🔔</div>
+                <div title="Settings">⚙️</div>
+                <div title="User Profile">👤</div>
+            </div>
+        </header>
+
+        <!-- Left Panel -->
+        <aside class="left-panel">
+            <div class="user-info">
+                <div class="company-logo">AC</div>
+                <div class="username">John Smith</div>
+                <div class="user-role">Operations Manager</div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#home" class="active">🏠 Home</a>
+                <a href="#profile">👤 Profile</a>
+                <a href="#saved-conversations">💬 Saved Conversations</a>
+                <a href="#permissions">🔒 Permissions</a>
+                <a href="#settings">⚙️ Settings</a>
+                <a href="#help">❓ Help & Support</a>
+            </nav>
+        </aside>
+
+        <!-- Center Panel -->
+        <main class="center-panel">
+            <section class="kpi-section">
+                <div class="kpi-cards">
+                    <div class="kpi-card">
+                        <h3>Cash Flow</h3>
+                        <p>$120K</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Stock Levels</h3>
+                        <p>85%</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Upcoming Reorders</h3>
+                        <p>12</p>
+                    </div>
+                    <div class="kpi-card">
+                        <h3>Sales Forecast</h3>
+                        <p>+8%</p>
+                    </div>
+                </div>
+
+                <div class="quick-links">
+                    <a href="#finance" class="quick-link">💰 Finance</a>
+                    <a href="#inventory" class="quick-link">📦 Inventory</a>
+                    <a href="#forecasting" class="quick-link">📊 Forecasting</a>
+                    <a href="#knowledge-base" class="quick-link">📚 Knowledge Base</a>
+                </div>
+            </section>
+
+            <section class="recent-activity">
+                <h3>📈 Recent Activity</h3>
+                <ul>
+                    <li>✅ Checked sales report - 2 hours ago</li>
+                    <li>📝 Updated inventory data - 4 hours ago</li>
+                    <li>🤖 Responded to AI Copilot query - 1 day ago</li>
+                    <li>💼 Reviewed financial projections - 1 day ago</li>
+                    <li>📋 Generated monthly report - 2 days ago</li>
+                </ul>
+            </section>
+        </main>
+
+        <!-- Right Panel -->
+        <aside class="right-panel">
+            <section class="chat-section">
+                <div class="chat-header">
+                    <h3>🤖 AI Copilot</h3>
+                    <div class="chat-status"></div>
+                </div>
+                
+                <div class="chat-messages">
+                    <div class="chat-message user">What is the cash flow status?</div>
+                    <div class="chat-message ai">Cash flow is stable at $120K. Your current position shows strong liquidity with upcoming receivables of $45K expected within 30 days.</div>
+                    <div class="chat-message user">Show me inventory alerts</div>
+                    <div class="chat-message ai">You have 3 items below reorder threshold. Item #123 is at 15% stock level and requires immediate attention.</div>
+                </div>
+
+                <div class="chat-input-container">
+                    <div class="chat-input">
+                        <input type="text" placeholder="Ask AI Copilot anything..." />
+                        <div class="input-buttons">
+                            <button class="input-btn" title="Voice Input">🎤</button>
+                            <button class="input-btn" title="Upload File">📎</button>
+                            <button class="input-btn" title="Send Message">➤</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-conversations">
+                    <h4>Recent Conversations</h4>
+                    <div class="conversation-item">Cash flow analysis discussion</div>
+                    <div class="conversation-item">Inventory optimization tips</div>
+                    <div class="conversation-item">Sales forecast review</div>
+                    <div class="conversation-item">Budget planning session</div>
+                    <div class="conversation-item">Market trend analysis</div>
+                    <button class="view-history-btn">📖 View Chat History</button>
+                </div>
+            </section>
+
+            <section class="notifications-section">
+                <h4>🔔 Notifications</h4>
+                <div class="notification-item">
+                    <strong>New order received</strong><br>
+                    <small>Order #1234 - $2,500</small>
+                </div>
+                <div class="notification-item">
+                    <strong>Stock level low</strong><br>
+                    <small>Item #123 - 15% remaining</small>
+                </div>
+                <div class="notification-item">
+                    <strong>Sales forecast updated</strong><br>
+                    <small>Q4 projection: +8% growth</small>
+                </div>
+                <div class="notification-item">
+                    <strong>Payment received</strong><br>
+                    <small>Client ABC Corp - $15,000</small>
+                </div>
+            </section>
+        </aside>
     </div>
-    <main>
-        <section class="kpi-cards">
-            <div class="kpi-card">
-                <h3>Cash Flow</h3>
-                <p>$120K</p>
-            </div>
-            <div class="kpi-card">
-                <h3>Stock Levels</h3>
-                <p>85%</p>
-            </div>
-            <div class="kpi-card">
-                <h3>Upcoming Reorders</h3>
-                <p>12</p>
-            </div>
-            <div class="kpi-card">
-                <h3>Sales Forecast</h3>
-                <p>+8%</p>
-            </div>
-        </section>
-        <section class="quick-links">
-            <a href="#finance" class="quick-link">Finance</a>
-            <a href="#inventory" class="quick-link">Inventory</a>
-            <a href="#forecasting" class="quick-link">Forecasting</a>
-            <a href="#knowledge-base" class="quick-link">Knowledge Base</a>
-        </section>
-        <section class="notifications">
-            <h3>Notifications</h3>
-            <div class="notification-item">New order received</div>
-            <div class="notification-item">Stock level low for item #123</div>
-            <div class="notification-item">Sales forecast updated</div>
-        </section>
-        <section class="ai-chat">
-            <div class="chat-messages">
-                <div class="chat-message user">What is the cash flow status?</div>
-                <div class="chat-message ai">Cash flow is stable at $120K.</div>
-            </div>
-            <div class="chat-input">
-                <input type="text" placeholder="Ask AI Copilot..." />
-                <button>Send</button>
-            </div>
-        </section>
-        <section class="recent-activity">
-            <h3>Recent Activity</h3>
-            <ul>
-                <li>Checked sales report</li>
-                <li>Updated inventory data</li>
-                <li>Responded to AI Copilot query</li>
-            </ul>
-        </section>
-    </main>
+
+    <script>
+        // Simple interactivity for demonstration
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.querySelector('.chat-input input');
+            const sendBtn = document.querySelector('.input-btn[title="Send Message"]');
+            const voiceBtn = document.querySelector('.input-btn[title="Voice Input"]');
+            const uploadBtn = document.querySelector('.input-btn[title="Upload File"]');
+            const chatMessages = document.querySelector('.chat-messages');
+
+            // Send message functionality
+            function sendMessage() {
+                const message = chatInput.value.trim();
+                if (message) {
+                    const userMessage = document.createElement('div');
+                    userMessage.className = 'chat-message user';
+                    userMessage.textContent = message;
+                    chatMessages.appendChild(userMessage);
+                    
+                    // Simulate AI response
+                    setTimeout(() => {
+                        const aiMessage = document.createElement('div');
+                        aiMessage.className = 'chat-message ai';
+                        aiMessage.textContent = "I understand your question. Let me analyze the data and provide you with insights.";
+                        chatMessages.appendChild(aiMessage);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 1000);
+                    
+                    chatInput.value = '';
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+
+            sendBtn.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            // Voice input simulation
+            voiceBtn.addEventListener('click', function() {
+                this.style.background = 'linear-gradient(135deg, #f44336 0%, #ef5350 100%)';
+                this.textContent = '🔴';
+                setTimeout(() => {
+                    this.style.background = 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)';
+                    this.textContent = '🎤';
+                    chatInput.value = 'Voice message: What are my top priorities today?';
+                }, 2000);
+            });
+
+            // Upload file simulation
+            uploadBtn.addEventListener('click', function() {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.pdf,.doc,.docx,.txt,.csv,.xlsx';
+                fileInput.onchange = function(e) {
+                    if (e.target.files.length > 0) {
+                        const fileName = e.target.files[0].name;
+                        chatInput.value = `📎 File uploaded: ${fileName}`;
+                    }
+                };
+                fileInput.click();
+            });
+
+            // Conversation item clicks
+            document.querySelectorAll('.conversation-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    chatMessages.innerHTML = '<div class="chat-message ai">Loading conversation history...</div>';
+                    setTimeout(() => {
+                        chatMessages.innerHTML = `
+                            <div class="chat-message user">Can you help me with ${this.textContent.toLowerCase()}?</div>
+                            <div class="chat-message ai">Of course! Let me pull up the relevant data and provide you with detailed insights.</div>
+                        `;
+                    }, 1000);
+                });
+            });
+
+            // Notification interactions
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    this.style.opacity = '0.5';
+                    setTimeout(() => {
+                        this.style.display = 'none';
+                    }, 300);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
